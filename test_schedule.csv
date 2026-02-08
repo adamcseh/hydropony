@@ -1,0 +1,5 @@
+device,timestamp,action
+light,2026-02-08-08-06-14,on
+pump,2026-02-08-08-06-14,on
+light,2026-02-08-08-06-21,off
+pump,2026-02-08-08-06-21,off
