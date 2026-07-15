@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HydroPi Control</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="intro">
+        <p class="eyebrow">Hydroponics Controller</p>
+        <h1>Light and irrigation scheduling from one browser tab.</h1>
+        <p class="hero-copy">
+          Set daily lighting hours, define recurring irrigation runs, and trigger
+          short manual overrides without touching the terminal.
+        </p>
+      </section>
+
+      <section class="layout-stack">
+        <article class="panel timeline-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Day Timeline</h2>
+              <p class="panel-copy">
+                Lighting runs above the line, irrigation runs below it, and the marker shows
+                the current controller time moving through the day.
+              </p>
+            </div>
+          </div>
+          <div class="timeline-summary">
+            <div class="timeline-summary-card">
+              <p class="status-label">Controller Time</p>
+              <p id="current-time" class="status-value">Loading...</p>
+            </div>
+            <div class="timeline-summary-card">
+              <p class="status-label">Schedule Time Zone</p>
+              <p id="current-timezone" class="status-small">Loading...</p>
+            </div>
+            <div class="timeline-summary-card">
+              <p class="status-label">Next Irrigation</p>
+              <p id="next-irrigation" class="status-small">Loading...</p>
+            </div>
+            <div class="timeline-summary-card">
+              <p class="status-label">Lighting Events</p>
+              <p id="lighting-count" class="status-value">0</p>
+            </div>
+            <div class="timeline-summary-card">
+              <p class="status-label">Irrigation Events</p>
+              <p id="irrigation-count" class="status-value">0</p>
+            </div>
+          </div>
+          <div id="day-timeline" class="day-timeline">
+            <div class="timeline-lane timeline-lane-top" id="timeline-lighting"></div>
+            <div class="timeline-axis">
+              <div class="timeline-hours" id="timeline-hours"></div>
+              <div class="timeline-now" id="timeline-now">
+                <span class="timeline-now-label" id="timeline-now-label">Now</span>
+              </div>
+            </div>
+            <div class="timeline-lane timeline-lane-bottom" id="timeline-irrigation"></div>
+          </div>
+        </article>
+
+        <section class="schedule-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Lighting Schedule</h2>
+              <button id="add-lighting-event" class="ghost" type="button">Add Event</button>
+            </div>
+            <form id="lighting-form" class="stack">
+              <label class="toggle">
+                <input id="lighting-enabled" type="checkbox" />
+                <span>Enable daily light schedule</span>
+              </label>
+              <div id="lighting-events" class="events"></div>
+              <label class="field">
+                <span>Schedule time zone</span>
+                <input id="schedule-timezone" type="text" placeholder="Europe/Budapest" required />
+              </label>
+              <p class="hint">
+                Lighting windows can overlap and can run overnight. Times are interpreted in
+                the configured schedule time zone.
+              </p>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Irrigation Schedule</h2>
+              <button id="add-event" class="ghost" type="button">Add Event</button>
+            </div>
+            <form id="irrigation-form" class="stack">
+              <label class="toggle">
+                <input id="irrigation-enabled" type="checkbox" />
+                <span>Enable irrigation automation</span>
+              </label>
+              <div id="irrigation-events" class="events"></div>
+            </form>
+          </article>
+        </section>
+
+        <article class="panel panel-status">
+          <div class="panel-head">
+            <h2>Device Status</h2>
+            <button id="refresh-status" class="ghost">Refresh</button>
+          </div>
+          <div class="device-list">
+            <div class="device-card">
+              <div>
+                <p class="device-name">Grow Light</p>
+                <p id="light-status" class="device-state">Unknown</p>
+              </div>
+              <div class="actions">
+                <button data-device="light" data-mode="force_on">Force On</button>
+                <button data-device="light" data-mode="force_off" class="warn">Force Off</button>
+                <button data-device="light" data-mode="auto" class="ghost">Auto</button>
+              </div>
+            </div>
+            <div class="device-card">
+              <div>
+                <p class="device-name">Irrigation Pump</p>
+                <p id="pump-status" class="device-state">Unknown</p>
+              </div>
+              <div class="actions">
+                <button id="run-pump-now">Run 60s</button>
+                <button data-device="pump" data-mode="force_off" class="warn">Force Off</button>
+                <button data-device="pump" data-mode="auto" class="ghost">Auto</button>
+              </div>
+            </div>
+          </div>
+          <p id="flash-message" class="flash"></p>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h2>GPIO Settings</h2>
+          </div>
+          <form id="devices-form" class="stack">
+            <div class="gpio-row">
+              <label class="field">
+                <span>Light GPIO</span>
+                <input id="light-pin" type="number" min="1" required />
+              </label>
+              <label class="toggle compact gpio-toggle">
+                <input id="light-active-low" type="checkbox" />
+                <span>Light relay is active low</span>
+              </label>
+            </div>
+            <div class="gpio-row">
+              <label class="field">
+                <span>Pump GPIO</span>
+                <input id="pump-pin" type="number" min="1" required />
+              </label>
+              <label class="toggle compact gpio-toggle">
+                <input id="pump-active-low" type="checkbox" />
+                <span>Pump relay is active low</span>
+              </label>
+            </div>
+          </form>
+        </article>
+      </section>
+
+      <section class="footer-actions">
+        <button id="save-config" class="primary">Save Schedule</button>
+      </section>
+    </main>
+
+    <template id="event-template">
+      <div class="event-row">
+        <div class="event-main">
+          <label class="field">
+            <span>Time</span>
+            <input class="event-time" type="time" required />
+          </label>
+          <label class="field">
+            <span>Duration (sec)</span>
+            <input class="event-duration" type="number" min="1" required />
+          </label>
+        </div>
+        <div class="event-side">
+          <label class="toggle compact event-toggle">
+            <input class="event-enabled" type="checkbox" />
+            <span>Enabled</span>
+          </label>
+          <button class="ghost remove-event" type="button">Remove</button>
+        </div>
+      </div>
+    </template>
+
+    <template id="lighting-event-template">
+      <div class="event-row lighting-event-row">
+        <div class="event-main">
+          <label class="field">
+            <span>Start time</span>
+            <input class="lighting-start" type="time" required />
+          </label>
+          <label class="field">
+            <span>End time</span>
+            <input class="lighting-end" type="time" required />
+          </label>
+        </div>
+        <div class="event-side">
+          <label class="toggle compact event-toggle">
+            <input class="lighting-enabled-toggle" type="checkbox" />
+            <span>Enabled</span>
+          </label>
+          <button class="ghost remove-lighting-event" type="button">Remove</button>
+        </div>
+      </div>
+    </template>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

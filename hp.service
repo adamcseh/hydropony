@@ -1,0 +1,14 @@
+[Unit]
+Description=HydroPi web scheduler
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/hp
+ExecStart=/usr/bin/python3 /home/pi/hp/app.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

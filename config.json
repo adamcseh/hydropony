@@ -1,0 +1,51 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080
+  },
+  "devices": {
+    "light": {
+      "pin": 23,
+      "active_low": false,
+      "name": "Grow Light 1"
+    },
+    "light_2": {
+      "pin": 25,
+      "active_low": false,
+      "name": "Grow Light 2"
+    },
+    "pump": {
+      "pin": 24,
+      "active_low": false,
+      "name": "Irrigation Pump"
+    }
+  },
+  "lighting": {
+    "light": {
+      "enabled": true,
+      "events": [
+        {
+          "start_time": "06:00",
+          "end_time": "18:00",
+          "enabled": true
+        }
+      ]
+    },
+    "light_2": {
+      "enabled": true,
+      "events": [
+        {
+          "start_time": "06:00",
+          "end_time": "18:00",
+          "enabled": true
+        }
+      ]
+    }
+  },
+  "irrigation": {
+    "enabled": true,
+    "interval_minutes": 10,
+    "duration_seconds": 60
+  },
+  "timezone": "Europe/Budapest"
+}
